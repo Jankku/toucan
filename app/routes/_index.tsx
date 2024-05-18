@@ -1,17 +1,15 @@
 import type { MetaFunction } from '@remix-run/node';
-import { Flex, Button, Container, Heading, TextField } from '@radix-ui/themes';
+import { Flex, Container, Heading } from '@radix-ui/themes';
 
 export const meta: MetaFunction = () => {
-  return [{ title: 'Toucan' }, { name: 'description', content: 'Welcome' }];
+  return [{ title: 'Toucan' }, { name: 'description', content: 'Welcome to Toucan' }];
 };
 
 export default function Index() {
   return (
     <Container size="2">
       <Flex direction="column" gap="2">
-        <Heading>Hello</Heading>
-        <TextField.Root placeholder="Placeholder"></TextField.Root>
-        <Button>Submit</Button>
+        <Heading>Toucan</Heading>
       </Flex>
     </Container>
   );
