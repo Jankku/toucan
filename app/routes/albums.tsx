@@ -1,6 +1,5 @@
-import { Button, Container, Heading } from '@radix-ui/themes';
+import { Container, Heading } from '@radix-ui/themes';
 import { LoaderFunctionArgs } from '@remix-run/node';
-import { Form } from '@remix-run/react';
 import { requireUser } from '~/utils/auth.server';
 import { createClient } from '~/utils/supabase/server';
 
@@ -17,9 +16,6 @@ export default function Albums() {
   return (
     <Container size="2">
       <Heading>Albums</Heading>
-      <Form action="/logout" method="post">
-        <Button type="submit">Logout</Button>
-      </Form>
     </Container>
   );
 }
