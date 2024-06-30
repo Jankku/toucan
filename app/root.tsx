@@ -1,18 +1,30 @@
 import {
   Form,
+  Link,
   Links,
   Meta,
   Outlet,
   Scripts,
   ScrollRestoration,
   useLoaderData,
-  useLocation,
 } from '@remix-run/react';
-import '@radix-ui/themes/styles.css';
-import { Flex, TabNav, Theme } from '@radix-ui/themes';
+import {
+  Box,
+  ChakraProvider,
+  Heading,
+  Tabs,
+  TabList,
+  Tab,
+  extendTheme,
+  withDefaultColorScheme,
+  Flex,
+  Button,
+} from '@chakra-ui/react';
 import { json, LoaderFunctionArgs } from '@remix-run/node';
 import { getEnv } from './env.server';
 import { createClient } from './utils/supabase/server';
+
+const theme = extendTheme(withDefaultColorScheme({ colorScheme: 'orange' }));
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const { supabase } = await createClient(request);
@@ -22,55 +34,45 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 };
 
 const TopNavigation = ({ isAuthenticated }: { isAuthenticated: boolean }) => {
-  const location = useLocation();
-  const path = location.pathname;
-
   return (
-    <TabNav.Root color="gray" mb="4">
-      <Flex direction="row" flexGrow="1" justify="between">
-        <Flex direction="row">
-          <TabNav.Link href="/" active={path === '/'}>
-            Home
-          </TabNav.Link>
+    <Tabs variant="line" mb={4}>
+      <TabList justifyContent="space-between">
+        <Flex>
+          <Tab>
+            <Link to="/">Home</Link>
+          </Tab>
           {isAuthenticated ? (
-            <TabNav.Link href="/albums" active={path === '/albums'}>
-              Albums
-            </TabNav.Link>
+            <Tab>
+              <Link to="/albums">Albums</Link>
+            </Tab>
           ) : undefined}
         </Flex>
         {isAuthenticated ? (
           <Form action="/logout" method="post">
-            <TabNav.Link asChild>
-              <button type="submit">Logout</button>
-            </TabNav.Link>
+            <Tab as="div">
+              <Button type="submit" size="sm" variant="outline" colorScheme="red">
+                Logout
+              </Button>
+            </Tab>
           </Form>
         ) : undefined}
-      </Flex>
-    </TabNav.Root>
+      </TabList>
+    </Tabs>
   );
 };
 
-export function Layout({ children }: { children: React.ReactNode }) {
-  const data = useLoaderData<typeof loader>();
-
+function Document({ children, title = 'Toucan' }: { children: React.ReactNode; title?: string }) {
   return (
     <html lang="en">
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <Meta />
+        <title>{title}</title>
         <Links />
       </head>
       <body>
-        <Theme accentColor="orange" panelBackground="solid">
-          <TopNavigation isAuthenticated={data.isAuthenticated} />
-          {children}
-        </Theme>
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `window.ENV = ${JSON.stringify(data.ENV)}`,
-          }}
-        />
+        {children}
         <ScrollRestoration />
         <Scripts />
       </body>
@@ -79,5 +81,33 @@ export function Layout({ children }: { children: React.ReactNode }) {
 }
 
 export default function App() {
-  return <Outlet />;
+  const data = useLoaderData<typeof loader>();
+
+  return (
+    <Document>
+      <ChakraProvider theme={theme}>
+        <TopNavigation isAuthenticated={data.isAuthenticated} />
+        <Outlet />
+      </ChakraProvider>
+      <script
+        dangerouslySetInnerHTML={{
+          __html: `window.ENV = ${JSON.stringify(data.ENV)}`,
+        }}
+      />
+    </Document>
+  );
+}
+
+export function ErrorBoundary({ error }: { error: Error }) {
+  return (
+    <Document title="Error!">
+      <ChakraProvider>
+        <Box>
+          <Heading as="h1" bg="blue.500">
+            [ErrorBoundary]: There was an error: {error.message}
+          </Heading>
+        </Box>
+      </ChakraProvider>
+    </Document>
+  );
 }

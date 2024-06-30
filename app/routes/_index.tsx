@@ -1,5 +1,5 @@
 import type { LinksFunction, MetaFunction } from '@remix-run/node';
-import { Flex, Container, Heading, Button, Card, Inset } from '@radix-ui/themes';
+import { Flex, Container, Heading, Button, Card, CardBody, Stack } from '@chakra-ui/react';
 import { Link } from '@remix-run/react';
 import { Image } from '~/components/common/Image';
 
@@ -17,28 +17,26 @@ export const links: LinksFunction = () => [
 
 export default function Index() {
   return (
-    <Container size="2" p="4">
-      <Flex direction="column" gap="6">
-        <Heading size="9">Toucan</Heading>
-        <Card style={{ paddingBottom: 0 }}>
-          <Flex justify="between">
-            <Flex direction="column" gap="4" pr="2" align="start">
-              <Heading as="h2" size="7">
+    <Container>
+      <Flex direction="column" gap={8}>
+        <Heading as="h1" size="2xl">
+          Toucan
+        </Heading>
+        <Card direction="row" variant="outline">
+          <CardBody>
+            <Stack gap={4}>
+              <Heading as="h2" size="md">
                 Get started
               </Heading>
-              <Flex direction="row" gap="2">
-                <Button asChild size="3" variant="surface">
-                  <Link to="/register">Register</Link>
-                </Button>
-                <Button asChild size="3" variant="surface">
-                  <Link to="/login">Login</Link>
-                </Button>
-              </Flex>
-            </Flex>
-            <Inset pl="current">
-              <Image src="/toucan.jpg" height="250" width="250" alt="AI generated Toucan" />
-            </Inset>
-          </Flex>
+              <Button as={Link} to="/register">
+                Register
+              </Button>
+              <Button as={Link} to="/login">
+                Login
+              </Button>
+            </Stack>
+          </CardBody>
+          <Image src="/toucan.jpg" height="250" width="250" alt="AI generated Toucan" />
         </Card>
       </Flex>
     </Container>

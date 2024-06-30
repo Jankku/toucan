@@ -1,7 +1,6 @@
-import * as Label from '@radix-ui/react-label';
-import { Box, TextField as RTextField } from '@radix-ui/themes';
+import { Box, Text, Input, InputProps } from '@chakra-ui/react';
 
-type TextFieldProps = RTextField.RootProps & {
+type TextFieldProps = InputProps & {
   label: string;
 };
 
@@ -9,8 +8,10 @@ export function TextInput(props: TextFieldProps) {
   const { id, label, ...rest } = props;
   return (
     <Box>
-      <Label.Root htmlFor={id}>{label}</Label.Root>
-      <RTextField.Root {...rest} id={id}></RTextField.Root>
+      <Text as="label" fontSize="sm" fontWeight={500} htmlFor={id}>
+        {label}
+      </Text>
+      <Input {...rest} id={id}></Input>
     </Box>
   );
 }
