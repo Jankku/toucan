@@ -1,17 +1,18 @@
 import {
-  Form,
+  isRouteErrorResponse,
   Link,
   Links,
   Meta,
+  NavLink,
   Outlet,
   Scripts,
   ScrollRestoration,
   useLoaderData,
+  useNavigate,
+  useRouteError,
 } from '@remix-run/react';
 import {
-  Box,
   ChakraProvider,
-  Heading,
   Tabs,
   TabList,
   Tab,
@@ -19,15 +20,20 @@ import {
   withDefaultColorScheme,
   Flex,
   Button,
+  AlertTitle,
+  Alert,
+  AlertIcon,
+  Container,
+  Center,
 } from '@chakra-ui/react';
 import { json, LoaderFunctionArgs } from '@remix-run/node';
 import { getEnv } from './env.server';
-import { createClient } from './utils/supabase/server';
+import { createServerClient } from './utils/supabase/server';
 
 const theme = extendTheme(withDefaultColorScheme({ colorScheme: 'orange' }));
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  const { supabase } = await createClient(request);
+  const { supabase } = await createServerClient(request);
   const session = (await supabase.auth.getSession()).data.session;
   const isAuthenticated = !!session;
   return json({ ENV: getEnv(), isAuthenticated });
@@ -35,26 +41,55 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
 const TopNavigation = ({ isAuthenticated }: { isAuthenticated: boolean }) => {
   return (
-    <Tabs variant="line" mb={4}>
+    <Tabs
+      variant="unstyled"
+      mb={4}
+      p="2"
+      size="sm"
+      bg="orange.50"
+      borderBottom="1px solid"
+      borderColor="orange.100"
+    >
       <TabList justifyContent="space-between">
         <Flex>
-          <Tab>
-            <Link to="/">Home</Link>
-          </Tab>
+          <NavLink to="/">
+            {({ isActive }) => (
+              <Tab
+                as="div"
+                fontWeight={500}
+                sx={isActive ? { color: 'white', bg: 'orange.500' } : undefined}
+              >
+                Home
+              </Tab>
+            )}
+          </NavLink>
           {isAuthenticated ? (
-            <Tab>
-              <Link to="/albums">Albums</Link>
-            </Tab>
+            <NavLink to="/albums">
+              {({ isActive }) => (
+                <Tab
+                  as="div"
+                  fontWeight={500}
+                  sx={isActive ? { color: 'white', bg: 'orange.400' } : undefined}
+                >
+                  Albums
+                </Tab>
+              )}
+            </NavLink>
           ) : undefined}
         </Flex>
         {isAuthenticated ? (
-          <Form action="/logout" method="post">
-            <Tab as="div">
-              <Button type="submit" size="sm" variant="outline" colorScheme="red">
-                Logout
-              </Button>
-            </Tab>
-          </Form>
+          <Button
+            as={Link}
+            to="/logout"
+            reloadDocument
+            size="xs"
+            variant="outline"
+            colorScheme="red"
+            alignSelf="center"
+            m={1}
+          >
+            Logout
+          </Button>
         ) : undefined}
       </TabList>
     </Tabs>
@@ -98,15 +133,30 @@ export default function App() {
   );
 }
 
-export function ErrorBoundary({ error }: { error: Error }) {
+export function ErrorBoundary() {
+  const error = useRouteError();
+  const navigate = useNavigate();
+
   return (
     <Document title="Error!">
-      <ChakraProvider>
-        <Box>
-          <Heading as="h1" bg="blue.500">
-            [ErrorBoundary]: There was an error: {error.message}
-          </Heading>
-        </Box>
+      <ChakraProvider theme={theme}>
+        <Container mt="8">
+          <Alert status="error">
+            <AlertIcon />
+            {isRouteErrorResponse(error) ? (
+              <>
+                <AlertTitle>
+                  {error.data?.message ? error.data.message : 'Unknown error'}
+                </AlertTitle>
+              </>
+            ) : (
+              <AlertTitle>Unknown error</AlertTitle>
+            )}
+          </Alert>
+          <Center mt="4">
+            <Button onClick={() => navigate(-1)}>Go back</Button>
+          </Center>
+        </Container>
       </ChakraProvider>
     </Document>
   );

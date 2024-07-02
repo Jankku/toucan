@@ -1,10 +1,9 @@
 import type { LinksFunction, MetaFunction } from '@remix-run/node';
-import { Flex, Container, Heading, Button, Card, CardBody, Stack } from '@chakra-ui/react';
+import { Flex, Container, Heading, Button, Card, CardBody, Stack, Image } from '@chakra-ui/react';
 import { Link } from '@remix-run/react';
-import { Image } from '~/components/common/Image';
 
 export const meta: MetaFunction = () => {
-  return [{ title: 'Toucan' }, { name: 'description', content: 'Welcome to Toucan' }];
+  return [{ title: 'Home | Toucan' }, { name: 'description', content: 'Welcome to Toucan' }];
 };
 
 export const links: LinksFunction = () => [
@@ -17,14 +16,14 @@ export const links: LinksFunction = () => [
 
 export default function Index() {
   return (
-    <Container>
+    <Container maxW="container.sm">
       <Flex direction="column" gap={8}>
         <Heading as="h1" size="2xl">
           Toucan
         </Heading>
-        <Card direction="row" variant="outline">
+        <Card direction="row" variant="outline" bg="orange.50" borderColor="orange.100">
           <CardBody>
-            <Stack gap={4}>
+            <Stack gap={6}>
               <Heading as="h2" size="md">
                 Get started
               </Heading>
@@ -36,7 +35,13 @@ export default function Index() {
               </Button>
             </Stack>
           </CardBody>
-          <Image src="/toucan.jpg" height="250" width="250" alt="AI generated Toucan" />
+          <Image
+            src="/toucan.jpg"
+            width="250"
+            height="250"
+            borderRightRadius="md"
+            alt="AI generated toucan in a forest"
+          />
         </Card>
       </Flex>
     </Container>
