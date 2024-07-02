@@ -3,7 +3,24 @@ import { Flex, Container, Heading, Button, Card, CardBody, Stack, Image } from '
 import { Link } from '@remix-run/react';
 
 export const meta: MetaFunction = () => {
-  return [{ title: 'Home | Toucan' }, { name: 'description', content: 'Welcome to Toucan' }];
+  return [
+    { title: 'Toucan | Your Colorful Image Gallery' },
+    {
+      name: 'description',
+      content:
+        'Upload and share your stunning images with Toucan. Enjoy a vibrant, user-friendly gallery where your photos take flight.',
+    },
+    { name: 'og:title', content: 'Toucan | Your Colorful Image Gallery' },
+    {
+      name: 'og:description',
+      content:
+        'Upload and share your stunning images with Toucan. Enjoy a vibrant, user-friendly gallery where your photos take flight.',
+    },
+    {
+      name: 'og:image',
+      content: `https://toucan.jankku.fi/toucan_og.jpg`,
+    },
+  ];
 };
 
 export const links: LinksFunction = () => [
