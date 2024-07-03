@@ -6,15 +6,10 @@ interface ImageWithPlaceholderProps extends Omit<ImageProps, 'src'> {
   blurhash?: string;
 }
 
-export function ImageWithPlaceholder({
-  src = 'https://placehold.co/1x1/fefaf0/fefaf0/jpg',
-  blurhash,
-  ...props
-}: ImageWithPlaceholderProps) {
+export function ImageWithPlaceholder({ blurhash, ...props }: ImageWithPlaceholderProps) {
   return (
     <Image
       {...props}
-      src={src}
       aspectRatio={1}
       fit="cover"
       borderRadius="md"

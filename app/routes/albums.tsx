@@ -13,7 +13,7 @@ import {
 import { ActionFunctionArgs, json, LoaderFunctionArgs, MetaFunction } from '@remix-run/node';
 import { requireUser } from '~/utils/auth.server';
 import { createServerClient } from '~/utils/supabase/server';
-import { Form, Link, useActionData, useLoaderData } from '@remix-run/react';
+import { Form, Link, useActionData, useLoaderData, useNavigation } from '@remix-run/react';
 import { createId } from '~/utils/nanoid';
 import { useEffect } from 'react';
 import { FormProvider, getFormProps, useForm } from '@conform-to/react';
@@ -53,9 +53,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
   const albums = albumsList.map((album) => ({
     ...album,
-    image_path: album.pictures[0]?.file_path
-      ? getFullPictureUrl(supabase, album.pictures[0]?.file_path)
-      : 'https://placehold.co/1x1/fefaf0/fefaf0/jpg',
+    image_path: getFullPictureUrl(supabase, album.pictures[0]?.file_path),
     image_blurhash: album.pictures[0]?.blurhash,
     image_count: album.pictures.length,
     pictures: undefined,
@@ -93,6 +91,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
 export default function Albums() {
   const data = useLoaderData<typeof loader>();
+  const navigation = useNavigation();
   const toast = useToast();
   const lastResult = useActionData<typeof action>();
   const [form, fields] = useForm({
@@ -100,6 +99,8 @@ export default function Albums() {
     constraint: getZodConstraint(createAlbumSchema),
     shouldValidate: 'onBlur',
   });
+
+  const isSubmitting = navigation.state === 'submitting';
 
   useEffect(() => {
     if (lastResult?.status === 'success') {
@@ -113,14 +114,16 @@ export default function Albums() {
   }, [lastResult, toast]);
 
   return (
-    <Container maxW="container.lg">
+    <Container py={8} maxW="container.lg">
       <Flex direction="column" gap={8}>
         <Heading as="h1">Albums</Heading>
         <FormProvider context={form.context}>
           <Form method="post" {...getFormProps(form)}>
             <Flex alignItems="end" maxW="sm" gap={1}>
               <TextInput name={fields.name.name} label="Album name" />
-              <Button type="submit">Create</Button>
+              <Button type="submit" isLoading={isSubmitting}>
+                Create
+              </Button>
             </Flex>
           </Form>
         </FormProvider>

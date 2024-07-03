@@ -1,5 +1,9 @@
 import { SupabaseClient } from '@supabase/supabase-js';
 
-export const getFullPictureUrl = (supabase: SupabaseClient, path: string) => {
-  return supabase.storage.from('pictures').getPublicUrl(path).data.publicUrl;
+const placeholderUrl = 'https://placehold.co/1x1/fafafa/fafafa/jpg';
+
+export const getFullPictureUrl = (supabase: SupabaseClient, path?: string) => {
+  return path
+    ? supabase.storage.from('pictures').getPublicUrl(path).data.publicUrl
+    : placeholderUrl;
 };

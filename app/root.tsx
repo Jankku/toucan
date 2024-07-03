@@ -1,9 +1,7 @@
 import {
   isRouteErrorResponse,
-  Link,
   Links,
   Meta,
-  NavLink,
   Outlet,
   Scripts,
   ScrollRestoration,
@@ -13,22 +11,21 @@ import {
 } from '@remix-run/react';
 import {
   ChakraProvider,
-  Tabs,
-  TabList,
-  Tab,
   extendTheme,
   withDefaultColorScheme,
-  Flex,
   Button,
   AlertTitle,
   Alert,
   AlertIcon,
   Container,
   Center,
+  Box,
+  Text,
 } from '@chakra-ui/react';
 import { json, LoaderFunctionArgs } from '@remix-run/node';
 import { getEnv } from './env.server';
 import { createServerClient } from './utils/supabase/server';
+import { Appbar } from './components/Appbar';
 
 const theme = extendTheme(withDefaultColorScheme({ colorScheme: 'orange' }));
 
@@ -39,77 +36,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   return json({ ENV: getEnv(), isAuthenticated });
 };
 
-const TopNavigation = ({ isAuthenticated }: { isAuthenticated: boolean }) => {
-  return (
-    <Tabs
-      variant="unstyled"
-      mb={4}
-      p="2"
-      size="sm"
-      bg="orange.50"
-      borderBottom="1px solid"
-      borderColor="orange.100"
-    >
-      <TabList justifyContent="space-between">
-        <Flex>
-          <NavLink to="/">
-            {({ isActive }) => (
-              <Tab
-                as="div"
-                fontWeight={500}
-                sx={isActive ? { color: 'white', bg: 'orange.500' } : undefined}
-              >
-                Home
-              </Tab>
-            )}
-          </NavLink>
-          {isAuthenticated ? (
-            <NavLink to="/photos">
-              {({ isActive }) => (
-                <Tab
-                  as="div"
-                  fontWeight={500}
-                  sx={isActive ? { color: 'white', bg: 'orange.400' } : undefined}
-                >
-                  Photos
-                </Tab>
-              )}
-            </NavLink>
-          ) : undefined}
-          {isAuthenticated ? (
-            <NavLink to="/albums">
-              {({ isActive }) => (
-                <Tab
-                  as="div"
-                  fontWeight={500}
-                  sx={isActive ? { color: 'white', bg: 'orange.400' } : undefined}
-                >
-                  Albums
-                </Tab>
-              )}
-            </NavLink>
-          ) : undefined}
-        </Flex>
-        {isAuthenticated ? (
-          <Button
-            as={Link}
-            to="/logout"
-            reloadDocument
-            size="xs"
-            variant="outline"
-            colorScheme="red"
-            alignSelf="center"
-            m={1}
-          >
-            Logout
-          </Button>
-        ) : undefined}
-      </TabList>
-    </Tabs>
-  );
-};
-
-function Document({ children, title = 'Toucan' }: { children: React.ReactNode; title?: string }) {
+function Document({ children, title }: { children: React.ReactNode; title?: string }) {
   return (
     <html lang="en">
       <head>
@@ -120,9 +47,11 @@ function Document({ children, title = 'Toucan' }: { children: React.ReactNode; t
         <Links />
       </head>
       <body>
-        {children}
-        <ScrollRestoration />
-        <Scripts />
+        <ChakraProvider theme={theme}>
+          {children}
+          <ScrollRestoration />
+          <Scripts />
+        </ChakraProvider>
       </body>
     </html>
   );
@@ -133,10 +62,13 @@ export default function App() {
 
   return (
     <Document>
-      <ChakraProvider theme={theme}>
-        <TopNavigation isAuthenticated={data.isAuthenticated} />
+      <Appbar isAuthenticated={data.isAuthenticated} />
+      <Box as="main" minH="100vh">
         <Outlet />
-      </ChakraProvider>
+      </Box>
+      <Box as="footer" px={4} py={6} bg="gray.800" color="white">
+        <Text>&copy; 2024 Jan-Erik</Text>
+      </Box>
       <script
         dangerouslySetInnerHTML={{
           __html: `window.ENV = ${JSON.stringify(data.ENV)}`,

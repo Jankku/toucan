@@ -41,12 +41,12 @@ export const links: LinksFunction = () => [
 
 export default function Index() {
   return (
-    <Container maxW="container.sm">
+    <Container py={8} maxW="container.sm">
       <Flex direction="column" gap={8}>
         <Heading as="h1" size="2xl">
           Toucan
         </Heading>
-        <Card direction="row" variant="outline" bg="orange.50" borderColor="orange.100">
+        <Card as="section" direction="row" variant="outline">
           <CardBody>
             <Stack gap={6}>
               <Heading as="h2" size="md">

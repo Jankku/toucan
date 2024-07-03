@@ -110,7 +110,7 @@ export default function Pictures() {
   }, [uploadPictureMetadataFetcher.data]);
 
   return (
-    <Container maxW="container.lg">
+    <Container py={8} maxW="container.lg">
       <Flex direction="column" gap={8}>
         <Heading as="h1">Pictures</Heading>
         <Box maxW="md">

@@ -45,7 +45,7 @@ export default function Photos() {
   const data = useLoaderData<typeof loader>();
 
   return (
-    <Container maxW="container.lg">
+    <Container py={8} maxW="container.lg">
       <Flex direction="column" gap={8}>
         <Heading as="h1">Photos</Heading>
         <SimpleGrid columns={[1, 2, 3]} gap={4}>
