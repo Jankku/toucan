@@ -7,7 +7,8 @@ import { requireUser } from '~/utils/auth.server';
 import { createServerClient } from '~/utils/supabase/server';
 import { createClient } from '~/utils/supabase/client';
 import { Blurhash } from 'react-blurhash';
-import { albumListSchema, nanoidSchema, pictureListSchema } from '~/utils/zod-schema';
+import { albumSchema, nanoidSchema, pictureListSchema } from '~/utils/zod-schema';
+import { getFullPictureUrl } from '~/utils/pictures';
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const { supabase, headers } = await createServerClient(request);
@@ -20,11 +21,16 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     .select()
     .eq('user_id', user.id)
     .eq('album_id', albumId)
-    .limit(1);
-  const album = albumListSchema.parse(albumResponse.data)[0];
+    .limit(1)
+    .single();
+  const album = albumSchema.parse(albumResponse.data);
 
   const pictureResponse = await supabase.from('pictures').select('*').eq('album_id', albumId);
-  const pictures = pictureListSchema.parse(pictureResponse.data);
+  const parsedPictures = pictureListSchema.parse(pictureResponse.data);
+  const pictures = parsedPictures.map((picture) => ({
+    ...picture,
+    file_path: getFullPictureUrl(supabase, picture.file_path),
+  }));
 
   return json({ userId: user.id, album, pictures }, { headers });
 };
@@ -60,10 +66,6 @@ export default function Pictures() {
   const [pictureIdFileMap] = useState<Map<string, File>>(() => new Map());
   const [supabase] = useState(() => createClient());
   const uploadPictureMetadataFetcher = useFetcher<typeof action>();
-
-  const getFullPictureUrl = (path: string) => {
-    return supabase.storage.from('pictures').getPublicUrl(path).data.publicUrl;
-  };
 
   const onCompressed = async (compressedPictures: Picture[]) => {
     compressedPictures.forEach((picture) => {
@@ -119,7 +121,7 @@ export default function Pictures() {
           {data.pictures.map((picture) => (
             <Card key={picture.picture_id} variant="surface">
               <Image
-                src={getFullPictureUrl(picture.file_path)}
+                src={picture.file_path}
                 alt={picture.name}
                 aspectRatio={4 / 3}
                 objectFit="cover"

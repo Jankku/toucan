@@ -17,6 +17,14 @@ export const meta: MetaFunction = () => {
         'Upload and share your stunning images with Toucan. Enjoy a vibrant, user-friendly gallery where your photos take flight.',
     },
     {
+      name: 'og:site_name',
+      content: 'Toucan',
+    },
+    {
+      name: 'og:url',
+      content: 'https://toucan.jankku.fi',
+    },
+    {
       name: 'og:image',
       content: `https://toucan.jankku.fi/toucan_og.jpg`,
     },

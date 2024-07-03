@@ -64,6 +64,19 @@ const TopNavigation = ({ isAuthenticated }: { isAuthenticated: boolean }) => {
             )}
           </NavLink>
           {isAuthenticated ? (
+            <NavLink to="/photos">
+              {({ isActive }) => (
+                <Tab
+                  as="div"
+                  fontWeight={500}
+                  sx={isActive ? { color: 'white', bg: 'orange.400' } : undefined}
+                >
+                  Photos
+                </Tab>
+              )}
+            </NavLink>
+          ) : undefined}
+          {isAuthenticated ? (
             <NavLink to="/albums">
               {({ isActive }) => (
                 <Tab

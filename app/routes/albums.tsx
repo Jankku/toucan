@@ -1,12 +1,10 @@
 import {
-  AspectRatio,
   Button,
   Card,
   CardBody,
   Container,
   Flex,
   Heading,
-  Image,
   SimpleGrid,
   Stack,
   Text,
@@ -22,18 +20,46 @@ import { FormProvider, getFormProps, useForm } from '@conform-to/react';
 import { getZodConstraint, parseWithZod } from '@conform-to/zod';
 import { z } from 'zod';
 import { TextInput } from '~/components/TextInput';
-import { albumListSchema } from '~/utils/zod-schema';
+import { albumSchema } from '~/utils/zod-schema';
+import { getFullPictureUrl } from '~/utils/pictures';
+import { ImageWithPlaceholder } from '~/components/ImageWithPlaceholder';
 
 const createAlbumSchema = z.object({
   name: z.string({ required_error: 'Album name is required' }),
 });
 
+const albumSchemaWithUrl = albumSchema.extend({
+  pictures: z.array(
+    z.object({
+      file_path: z.string(),
+      blurhash: z.string(),
+    }),
+  ),
+});
+
+const albumListWithUrlSchema = z.array(albumSchemaWithUrl);
+
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const { supabase, headers } = await createServerClient(request);
   const user = await requireUser(supabase);
 
-  const albumResponse = await supabase.from('albums').select('*').eq('user_id', user.id);
-  const albums = albumListSchema.parse(albumResponse.data);
+  const albumResponse = await supabase
+    .from('albums')
+    .select('*, pictures(*)')
+    .order('created_at', { referencedTable: 'pictures', ascending: true })
+    .eq('user_id', user.id);
+
+  const albumsList = albumListWithUrlSchema.parse(albumResponse.data);
+
+  const albums = albumsList.map((album) => ({
+    ...album,
+    image_path: album.pictures[0]?.file_path
+      ? getFullPictureUrl(supabase, album.pictures[0]?.file_path)
+      : 'https://placehold.co/1x1/fefaf0/fefaf0/jpg',
+    image_blurhash: album.pictures[0]?.blurhash,
+    image_count: album.pictures.length,
+    pictures: undefined,
+  }));
 
   return json({ albums }, { headers });
 };
@@ -103,15 +129,17 @@ export default function Albums() {
             {data.albums.map((album) => (
               <Card key={album.album_id} variant="outline">
                 <Link to={`/albums/${album.album_id}`}>
-                  <AspectRatio ratio={1}>
-                    <Image objectFit="cover" fallbackSrc="https://via.placeholder.com/150" />
-                  </AspectRatio>
+                  <ImageWithPlaceholder
+                    src={album.image_path}
+                    blurhash={album.image_blurhash}
+                    alt={album.name}
+                  />
                   <CardBody p={2}>
                     <Stack>
                       <Heading as="h2" size="sm" noOfLines={1}>
                         {album.name}
                       </Heading>
-                      <Text fontSize="xs">1 items</Text>
+                      <Text fontSize="xs">{album.image_count} items</Text>
                     </Stack>
                   </CardBody>
                 </Link>
