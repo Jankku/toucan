@@ -4,15 +4,11 @@ import { encodeImageToBlurhash } from '~/utils/blurhash';
 import { blobToFile, compress } from '~/utils/file';
 import { createId } from '~/utils/nanoid';
 
-export type Picture = {
-  picture_id: string;
+export type Photo = {
+  photo_id: string;
   file: File;
   thumbnail: File;
   blurhash: string;
-};
-
-type Props = {
-  onCompressed: (pictures: Picture[]) => void;
 };
 
 const createBlurHash = async (file: File) => {
@@ -21,11 +17,11 @@ const createBlurHash = async (file: File) => {
   return encodeImageToBlurhash(bitmap);
 };
 
-const imageToPicture = async (file: File): Promise<Picture> => {
+const imageToPhoto = async (file: File): Promise<Photo> => {
   const [originalBlob, thumbnailBlob, blurhash] = await Promise.all([
     compress(file, { maxSizeMB: 10 }),
     compress(file, {
-      maxWidthOrHeight: 400,
+      maxWidthOrHeight: 600,
       preserveExif: false,
       fileType: 'image/webp',
       initialQuality: 0.8,
@@ -33,42 +29,53 @@ const imageToPicture = async (file: File): Promise<Picture> => {
     createBlurHash(file),
   ]);
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const newFile = blobToFile(originalBlob, {
     name: file.name,
     type: file.type,
     lastModified: file.lastModified,
   });
+
   const thumbnail = blobToFile(thumbnailBlob, {
     name: file.name,
     type: 'image/webp',
   });
 
-  return { picture_id: createId(), file: newFile, thumbnail, blurhash };
+  // TODO: change file to newFile, upload both the original and the thumbnail
+  return { photo_id: createId(), file: thumbnail, thumbnail, blurhash };
 };
 
-export function FileUpload({ onCompressed }: Props) {
+type FileUploadProps = {
+  isUploading: boolean;
+  onCompressed: (photos: Photo[]) => void;
+};
+
+export function FileUpload({ isUploading, onCompressed }: FileUploadProps) {
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     multiple: true,
     accept: {
       'image/*': ['.jpg', '.jpeg', '.png', '.webp'],
     },
     onDrop: async (acceptedFiles: File[]) => {
-      const pictures = await Promise.allSettled(acceptedFiles.map(imageToPicture));
+      const photos = await Promise.allSettled(acceptedFiles.map(imageToPhoto));
 
-      const successfulPictures = pictures
-        .filter((p) => p.status === 'fulfilled')
-        .map((p) => p.value);
-      const failedPictureReasons = pictures
-        .filter((p) => p.status === 'rejected')
-        .map((p) => p.reason);
+      const successfulPhotos = photos.filter((p) => p.status === 'fulfilled').map((p) => p.value);
+      const failedPhotoReasons = photos.filter((p) => p.status === 'rejected').map((p) => p.reason);
 
-      if (failedPictureReasons.length > 0) {
-        console.error('Failed to upload pictures:', failedPictureReasons);
+      if (failedPhotoReasons.length > 0) {
+        console.error('Failed to upload photos:', failedPhotoReasons);
       }
 
-      onCompressed(successfulPictures);
+      onCompressed(successfulPhotos);
     },
   });
+
+  const fileUploadText = isUploading
+    ? 'Uploading...'
+    : isDragActive
+      ? 'Drop the photos here...'
+      : 'Drag and drop some photos here, or click to select photos';
+
   return (
     <Box
       {...getRootProps()}
@@ -82,12 +89,8 @@ export function FileUpload({ onCompressed }: Props) {
       borderColor="orange.500"
       cursor="pointer"
     >
-      <Input {...(getInputProps() as InputProps)} />
-      {isDragActive ? (
-        <Text>Drop the files here ...</Text>
-      ) : (
-        <Text>Drag and drop some files here, or click to select files</Text>
-      )}
+      <Input {...(getInputProps() as InputProps)} disabled={isUploading} />
+      <Text>{fileUploadText}</Text>
     </Box>
   );
 }

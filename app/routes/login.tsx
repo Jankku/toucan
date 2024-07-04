@@ -12,12 +12,21 @@ import {
 } from '@chakra-ui/react';
 import { FormProvider, getFormProps, useForm } from '@conform-to/react';
 import { getZodConstraint, parseWithZod } from '@conform-to/zod';
-import { ActionFunctionArgs, redirect } from '@remix-run/node';
+import { ActionFunctionArgs, LoaderFunctionArgs, redirect } from '@remix-run/node';
 import { Form, useActionData, useNavigation } from '@remix-run/react';
 import { Link } from '~/components/Link';
 import { TextInput } from '~/components/TextInput';
 import { createServerClient } from '~/utils/supabase/server';
 import { authSchema } from '~/utils/zod-schema';
+
+export const loader = async ({ request }: LoaderFunctionArgs) => {
+  const { supabase } = await createServerClient(request);
+  const session = (await supabase.auth.getSession()).data.session;
+  if (session) {
+    return redirect('/photos');
+  }
+  return null;
+};
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   const formData = await request.formData();

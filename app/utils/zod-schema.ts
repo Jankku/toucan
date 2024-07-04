@@ -1,6 +1,6 @@
 import { z } from 'zod';
-import { nanoidAlphabet, nanoidLength } from './nanoid';
 import { isBlurhashValid } from 'blurhash';
+import { isValidNanoid } from './nanoid';
 
 export const dateStringSchema = z.string().refine((arg) => {
   if (!arg) return false;
@@ -11,15 +11,7 @@ export const dateSchema = z.preprocess((arg) => {
   if (typeof arg == 'string' || arg instanceof Date) return new Date(arg);
 }, z.date()) as z.ZodType<Date | undefined>; // fix for preprocess
 
-const nanoIdAlphabetSet = new Set(nanoidAlphabet);
-
-const isNanoId = (value: string) => {
-  return (
-    value.length === nanoidLength && value.split('').every((char) => nanoIdAlphabetSet.has(char))
-  );
-};
-
-export const nanoidSchema = z.string().refine(isNanoId, { message: 'Invalid nanoid' });
+export const nanoidSchema = z.string().refine(isValidNanoid, { message: 'Invalid nanoid' });
 
 export const blurhashSchema = z
   .string()
@@ -43,8 +35,8 @@ export const albumSchema = z.object({
 
 export const albumListSchema = z.array(albumSchema);
 
-export const pictureSchema = z.object({
-  picture_id: nanoidSchema,
+export const photoSchema = z.object({
+  photo_id: nanoidSchema,
   album_id: nanoidSchema,
   file_path: z.string(),
   name: z.string(),
@@ -52,4 +44,4 @@ export const pictureSchema = z.object({
   created_at: dateStringSchema,
 });
 
-export const pictureListSchema = z.array(pictureSchema);
+export const photoListSchema = z.array(photoSchema);

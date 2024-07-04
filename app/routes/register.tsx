@@ -10,7 +10,7 @@ import {
   Text,
   CardBody,
 } from '@chakra-ui/react';
-import { ActionFunctionArgs, redirect } from '@remix-run/node';
+import { ActionFunctionArgs, LoaderFunctionArgs, redirect } from '@remix-run/node';
 import { createClient } from '~/utils/supabase/client';
 import { Form, useActionData, useNavigation } from '@remix-run/react';
 import { getZodConstraint, parseWithZod } from '@conform-to/zod';
@@ -18,6 +18,16 @@ import { authSchema } from '~/utils/zod-schema';
 import { FormProvider, getFormProps, useForm } from '@conform-to/react';
 import { TextInput } from '~/components/TextInput';
 import { Link } from '~/components/Link';
+import { createServerClient } from '~/utils/supabase/server';
+
+export const loader = async ({ request }: LoaderFunctionArgs) => {
+  const { supabase } = await createServerClient(request);
+  const session = (await supabase.auth.getSession()).data.session;
+  if (session) {
+    return redirect('/photos');
+  }
+  return null;
+};
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   const formData = await request.formData();

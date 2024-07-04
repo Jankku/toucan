@@ -6,7 +6,7 @@ import {
   Flex,
   Heading,
   SimpleGrid,
-  Stack,
+  Tag,
   Text,
   useToast,
 } from '@chakra-ui/react';
@@ -21,7 +21,7 @@ import { getZodConstraint, parseWithZod } from '@conform-to/zod';
 import { z } from 'zod';
 import { TextInput } from '~/components/TextInput';
 import { albumSchema } from '~/utils/zod-schema';
-import { getFullPictureUrl } from '~/utils/pictures';
+import { getFullPhotoUrl } from '~/utils/photos';
 import { ImageWithPlaceholder } from '~/components/ImageWithPlaceholder';
 
 const createAlbumSchema = z.object({
@@ -29,7 +29,7 @@ const createAlbumSchema = z.object({
 });
 
 const albumSchemaWithUrl = albumSchema.extend({
-  pictures: z.array(
+  photos: z.array(
     z.object({
       file_path: z.string(),
       blurhash: z.string(),
@@ -45,18 +45,18 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
   const albumResponse = await supabase
     .from('albums')
-    .select('*, pictures(*)')
-    .order('created_at', { referencedTable: 'pictures', ascending: true })
+    .select('*, photos(*)')
+    .order('created_at', { referencedTable: 'photos', ascending: true })
     .eq('user_id', user.id);
 
   const albumsList = albumListWithUrlSchema.parse(albumResponse.data);
 
   const albums = albumsList.map((album) => ({
     ...album,
-    image_path: getFullPictureUrl(supabase, album.pictures[0]?.file_path),
-    image_blurhash: album.pictures[0]?.blurhash,
-    image_count: album.pictures.length,
-    pictures: undefined,
+    photo_path: getFullPhotoUrl(supabase, album.photos[0]?.file_path),
+    photo_blurhash: album.photos[0]?.blurhash,
+    photo_count: album.photos.length,
+    photos: undefined,
   }));
 
   return json({ albums }, { headers });
@@ -67,7 +67,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   const user = await requireUser(supabase);
 
   const formData = await request.formData();
-
   const submission = parseWithZod(formData, { schema: createAlbumSchema });
 
   if (submission.status !== 'success') {
@@ -97,7 +96,6 @@ export default function Albums() {
   const [form, fields] = useForm({
     lastResult,
     constraint: getZodConstraint(createAlbumSchema),
-    shouldValidate: 'onBlur',
   });
 
   const isSubmitting = navigation.state === 'submitting';
@@ -107,8 +105,6 @@ export default function Albums() {
       toast({
         title: 'Album created',
         status: 'success',
-        duration: 4000,
-        isClosable: true,
       });
     }
   }, [lastResult, toast]);
@@ -133,25 +129,25 @@ export default function Albums() {
               <Card key={album.album_id} variant="outline">
                 <Link to={`/albums/${album.album_id}`}>
                   <ImageWithPlaceholder
-                    src={album.image_path}
-                    blurhash={album.image_blurhash}
+                    src={album.photo_path}
+                    blurhash={album.photo_blurhash}
                     alt={album.name}
                   />
-                  <CardBody p={2}>
-                    <Stack>
-                      <Heading as="h2" size="sm" noOfLines={1}>
+                  <CardBody noOfLines={1} overflow="hidden" p={4}>
+                    <Flex justifyContent="space-between">
+                      <Text fontWeight={500} noOfLines={1}>
                         {album.name}
-                      </Heading>
-                      <Text fontSize="xs">{album.image_count} items</Text>
-                    </Stack>
+                      </Text>
+                      <Tag size="sm" alignSelf="start">
+                        {album.photo_count} items
+                      </Tag>
+                    </Flex>
                   </CardBody>
                 </Link>
               </Card>
             ))}
           </SimpleGrid>
-        ) : (
-          <Text>No albums</Text>
-        )}
+        ) : undefined}
       </Flex>
     </Container>
   );

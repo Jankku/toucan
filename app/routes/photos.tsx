@@ -3,13 +3,13 @@ import { json, LoaderFunctionArgs, MetaFunction } from '@remix-run/node';
 import { requireUser } from '~/utils/auth.server';
 import { createServerClient } from '~/utils/supabase/server';
 import { useLoaderData } from '@remix-run/react';
-import { albumSchema, pictureSchema } from '~/utils/zod-schema';
-import { getFullPictureUrl } from '~/utils/pictures';
+import { albumSchema, photoSchema } from '~/utils/zod-schema';
+import { getFullPhotoUrl } from '~/utils/photos';
 import { Blurhash } from 'react-blurhash';
 import { z } from 'zod';
 
-const allPicturesSchema = z.array(
-  pictureSchema.extend({
+const allPhotosSchema = z.array(
+  photoSchema.extend({
     albums: albumSchema,
   }),
 );
@@ -18,11 +18,11 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   const { supabase, headers } = await createServerClient(request);
   const user = await requireUser(supabase);
 
-  const pictureResponse = await supabase
-    .from('pictures')
+  const photoResponse = await supabase
+    .from('photos')
     .select(
       `
-    picture_id,
+    photo_id,
     album_id,
     file_path,
     name,
@@ -32,13 +32,13 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   `,
     )
     .eq('albums.user_id', user.id);
-  const parsedPictures = allPicturesSchema.parse(pictureResponse.data);
-  const pictures = parsedPictures.map((picture) => ({
-    ...picture,
-    file_path: getFullPictureUrl(supabase, picture.file_path),
+  const parsedPhotos = allPhotosSchema.parse(photoResponse.data);
+  const photos = parsedPhotos.map((photo) => ({
+    ...photo,
+    file_path: getFullPhotoUrl(supabase, photo.file_path),
   }));
 
-  return json({ pictures }, { headers });
+  return json({ photos }, { headers });
 };
 
 export default function Photos() {
@@ -49,14 +49,14 @@ export default function Photos() {
       <Flex direction="column" gap={8}>
         <Heading as="h1">Photos</Heading>
         <SimpleGrid columns={[1, 2, 3]} gap={4}>
-          {data.pictures.map((picture) => (
-            <Card key={picture.picture_id} variant="surface">
+          {data.photos.map((photo) => (
+            <Card key={photo.photo_id} variant="surface">
               <Image
-                src={picture.file_path}
-                alt={picture.name}
+                src={photo.file_path}
+                alt={photo.name}
                 aspectRatio={4 / 3}
                 objectFit="cover"
-                fallback={<Blurhash hash={picture.blurhash} width="100%" height="100%" />}
+                fallback={<Blurhash hash={photo.blurhash} width="100%" height="100%" />}
               />
             </Card>
           ))}

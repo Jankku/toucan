@@ -7,8 +7,8 @@ CREATE TABLE albums (
     edited_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE pictures (
-    picture_id TEXT PRIMARY KEY,
+CREATE TABLE photos (
+    photo_id TEXT PRIMARY KEY,
     album_id TEXT NOT NULL,
     file_path TEXT NOT NULL,
     name TEXT NOT NULL,
@@ -18,4 +18,4 @@ CREATE TABLE pictures (
 );
 
 CREATE INDEX idx_albums_user_id ON albums(user_id);
-CREATE INDEX idx_pictures_album_id ON pictures(album_id);
+CREATE INDEX idx_photos_album_id ON photos(album_id);

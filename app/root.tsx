@@ -47,7 +47,10 @@ function Document({ children, title }: { children: React.ReactNode; title?: stri
         <Links />
       </head>
       <body>
-        <ChakraProvider theme={theme}>
+        <ChakraProvider
+          theme={theme}
+          toastOptions={{ defaultOptions: { position: 'top', duration: 5000, isClosable: true } }}
+        >
           {children}
           <ScrollRestoration />
           <Scripts />
