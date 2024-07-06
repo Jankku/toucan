@@ -44,4 +44,10 @@ export const photoSchema = z.object({
   created_at: dateStringSchema,
 });
 
+export const photoWithUrlSchema = photoSchema.extend({
+  url: z.string(),
+});
+
+export type PhotoWithUrl = z.infer<typeof photoWithUrlSchema>;
+
 export const photoListSchema = z.array(photoSchema);

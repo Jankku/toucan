@@ -1,30 +1,16 @@
-import {
-  Box,
-  Checkbox,
-  CheckboxGroup,
-  Container,
-  Flex,
-  Heading,
-  IconButton,
-  SimpleGrid,
-  Text,
-  Tooltip,
-  useToast,
-} from '@chakra-ui/react';
+import { Box, Container, Flex, Heading, useToast } from '@chakra-ui/react';
 import { ActionFunctionArgs, json, LoaderFunctionArgs } from '@remix-run/node';
 import { useFetcher, useLoaderData } from '@remix-run/react';
-import { ChangeEvent, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { FileUpload, Photo } from '~/components/FileUpload';
 import { requireUser } from '~/utils/auth.server';
 import { createServerClient } from '~/utils/supabase/server';
 import { createClient } from '~/utils/supabase/client';
 import { albumSchema, nanoidSchema, photoListSchema } from '~/utils/zod-schema';
 import { createSignedUrls, getFullPhotoUrl, uploadPhotos, uploadSchema } from '~/utils/photos';
-import { AlbumPhoto } from '~/components/AlbumPhoto';
-import { DeleteIcon } from '@chakra-ui/icons';
 import { action as deleteAction } from './photos_.delete';
 import { useFetcherWithReset } from '~/hooks/useFetcherWithReset';
-import { useCheckbox } from '~/hooks/useCheckbox';
+import { AlbumPhotoList } from '~/components/AlbumPhotoList';
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const { supabase, headers } = await createServerClient(request);
@@ -45,7 +31,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const parsedPhotos = photoListSchema.parse(photoResponse.data);
   const photos = parsedPhotos.map((photo) => ({
     ...photo,
-    file_path: getFullPhotoUrl(supabase, photo.file_path),
+    url: getFullPhotoUrl(supabase, photo.file_path),
   }));
 
   return json({ userId: user.id, album, photos }, { headers });
@@ -73,8 +59,6 @@ export default function AlbumPhotos() {
   const uploadPhotoMetadataFetcher = useFetcher<typeof action>();
   const deletePhotoFetcher = useFetcherWithReset<typeof deleteAction>();
   const [photoIdFileMap] = useState<Map<string, File>>(() => new Map());
-  const [selectedImageIds, setSelectedImageIds] = useState<string[]>([]);
-  const selectAllCheckbox = useCheckbox({ data: data.photos, checkedValues: selectedImageIds });
   const [supabase] = useState(() => createClient());
 
   const isUploading = uploadPhotoMetadataFetcher.state === 'submitting';
@@ -97,28 +81,13 @@ export default function AlbumPhotos() {
     uploadPhotoMetadataFetcher.submit({ uploads }, { method: 'POST', encType: 'application/json' });
   };
 
-  const onSelectAllImages = (e: ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.checked;
-    if (value) {
-      const allIds = data.photos.map((photo) => photo.photo_id);
-      setSelectedImageIds(allIds);
-    } else {
-      setSelectedImageIds([]);
-    }
-  };
-
-  const onSelectImage = (values: string[]) => {
-    setSelectedImageIds(values);
-  };
-
-  const onDeleteImages = async () => {
+  const onDeletePhotos = async (photoids: string[]) => {
     const formData = new FormData();
-    selectedImageIds.forEach((id) => formData.append('photoIds', id));
+    photoids.forEach((id) => formData.append('photoIds', id));
     deletePhotoFetcher.submit(formData, {
       action: '/photos/delete',
       method: 'DELETE',
     });
-    setSelectedImageIds([]);
   };
 
   useEffect(() => {
@@ -150,47 +119,13 @@ export default function AlbumPhotos() {
   }, [deletePhotoFetcher, toast]);
 
   return (
-    <Container py={8} maxW="container.lg">
+    <Container py={8} maxW="container.xl">
       <Flex direction="column" gap={8}>
         <Heading as="h1">{data.album.name}</Heading>
         <Box maxW="md">
           <FileUpload isUploading={isUploading} onCompressed={onCompressed} />
         </Box>
-        {selectedImageIds.length > 0 ? (
-          <Box p={4} bg="orange.50" border="1px solid" borderColor="orange.200" fontWeight={500}>
-            <Flex alignItems="center" justify="space-between">
-              <Flex gap={4}>
-                <Checkbox
-                  aria-label="Select all photos"
-                  isChecked={selectAllCheckbox.isChecked}
-                  isIndeterminate={selectAllCheckbox.isIndeterminate}
-                  onChange={onSelectAllImages}
-                />
-                <Text>{selectedImageIds.length} photos selected</Text>
-              </Flex>
-              <Tooltip hasArrow label={`Delete ${selectedImageIds.length} images`}>
-                <IconButton
-                  icon={<DeleteIcon />}
-                  aria-label={`Delete ${selectedImageIds.length} images`}
-                  onClick={onDeleteImages}
-                />
-              </Tooltip>
-            </Flex>
-          </Box>
-        ) : undefined}
-        <CheckboxGroup value={selectedImageIds} onChange={onSelectImage}>
-          <SimpleGrid columns={[1, 2, 3]} gap={4}>
-            {data.photos.map(({ photo_id, file_path, name, blurhash }) => (
-              <AlbumPhoto
-                key={photo_id}
-                id={photo_id}
-                src={file_path}
-                alt={name}
-                blurhash={blurhash}
-              />
-            ))}
-          </SimpleGrid>
-        </CheckboxGroup>
+        <AlbumPhotoList photos={data.photos} onDeletePhotos={onDeletePhotos} />
       </Flex>
     </Container>
   );
